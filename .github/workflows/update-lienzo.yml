@@ -1,0 +1,36 @@
+# Keeps Casks/lienzo.rb on the newest Lienzo desktop release. Runs every hour and by hand; it only commits when
+# github.com/Gabsplat/paseo-canvas has a newer desktop-v* release with both macOS disk images published.
+name: Update Lienzo
+
+on:
+  schedule:
+    - cron: '17 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  bump:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - name: Bump the cask to the latest release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          repo=Gabsplat/paseo-canvas
+          tag=$(gh api "repos/$repo/releases?per_page=30" -q '[.[] | select(.draft | not) | .tag_name | select(startswith("desktop-v"))][0]')
+          [ -n "$tag" ] || { echo "No desktop release yet."; exit 0; }
+          version="${tag#desktop-v}"
+          current=$(sed -n 's/^  version "\(.*\)"$/\1/p' Casks/lienzo.rb)
+          if [ "$version" = "$current" ]; then echo "Already at $version."; exit 0; fi
+          digest() { gh api "repos/$repo/releases/tags/$tag" -q ".assets[] | select(.name == \"$1\") | .digest" | sed 's/^sha256://'; }
+          arm=$(digest "Lienzo-$version-mac-arm64.dmg"); intel=$(digest "Lienzo-$version-mac-x64.dmg")
+          if [ -z "$arm" ] || [ -z "$intel" ]; then echo "$tag has no macOS images yet."; exit 0; fi
+          sed -i -E "s/^  version \".*\"$/  version \"$version\"/; s/(sha256 arm: +)\"[0-9a-f]+\"/\1\"$arm\"/; s/(intel: +)\"[0-9a-f]+\"/\1\"$intel\"/" Casks/lienzo.rb
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "lienzo $version"
+          git push
