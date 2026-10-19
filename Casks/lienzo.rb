@@ -1,9 +1,9 @@
 cask "lienzo" do
   arch arm: "arm64", intel: "x64"
 
-  version "0.3.1"
-  sha256 arm:   "0b81ee181c28af59b9e2f3b6364757c1f30b5092eb335b1028a8248f2a675c1c",
-         intel: "0b11c6807bf24403500d8f0461f7c52c847af24c90340040890ce22ed401da7a"
+  version "0.3.2"
+  sha256 arm:   "3ab7376a5e86c3bd698f3258acd66bdce6f5af6b282d5f7dde1275e2cbc5d040",
+         intel: "15d2837123801290a61d0c52df35b5da4c10f796ee043b6ce5fe3362d7b44619"
 
   url "https://github.com/Gabsplat/paseo-canvas/releases/download/desktop-v#{version}/Lienzo-#{version}-mac-#{arch}.dmg"
   name "Lienzo"
